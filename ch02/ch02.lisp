@@ -4,6 +4,11 @@
 
 (in-package :nlp-dl.ch02)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 2.2.1 文字の処理
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 ;; The Definition of Standard Characters
 ;; http://www.lispworks.com/documentation/HyperSpec/Body/02_ac.htm
 
@@ -47,7 +52,75 @@
        for val being each hash-values of ht
        collect (cons key val))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 2.2.2 単語の処理
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; unicodeの調べ方
+;; (char-code #\鼂)
+;; unicodeを16進数に変換
+;; (format t "~x" (char-code #\鼂))
+;; unicodeから文字
+;; (format t "~:c" (code-char #x9F02))
+
+(defun chartype (ch)
+  "1文字分のunicodeポイントコードを取り，文字種のシンボルを返す"
+  (let ((unicode (char-code ch)))
+    (cond
+      ((and (< #x002F unicode) (< unicode #x003A)) 'number)
+      ((and (< #x0040 unicode) (< unicode #x005B)) 'alphabet) ; 大文字
+      ((and (< #x0060 unicode) (< unicode #x007B)) 'alphabet) ; 小文字
+      ((and (< #x3040 unicode) (< unicode #x30A0)) 'hiragana)
+      ((and (< #x309F unicode) (< unicode #x30FF)) 'katakana)
+      ((and (<= #x4E00 unicode) (<= unicode #x9FA0)) 'kanji)
+      ((and (< #xFF65 unicode ) (< unicode #xFF9F)) 'hankaku-kana)
+      (t 'punctuation))))
+
+(defun split-chartype (in &key (string nil))
+  "inputストリームを取り文字種で分割したリストを返す．`:string`が`t`なら文字列の，`nil`ならシンボルのリストを返す．"
+  (macrolet ((make-result (stream result)
+	       `(reverse
+		 (cons (if string (get-output-stream-string ,stream)
+			   (intern (get-output-stream-string ,stream)))
+		       ,result))))
+    (labels ((%split (in type nextch word res) ; type for current char
+	     (if (null nextch) (make-result word res)
+		 (let ((next-type (chartype nextch)))
+		   ; (format t "ch=~:c~%" nextch) ; for debug
+		   (if (eql type next-type)
+		       (progn ; type == next-type
+			 (write-char nextch word)
+			 (%split in type (read-char in nil) word res))
+		       (progn ; type != next-type
+			 ;; skip punctuation
+			 (loop while (eql next-type 'punctuation)
+			    do
+			      (setf nextch (read-char in nil))
+			      (when (null nextch) (return))
+			      (setf next-type (chartype nextch)))
+			 (if (null nextch) 
+			     ;; end of the stream while looking for
+			     ;; non-punctuation
+			     (make-result word res)
+			     ;; new word found
+			     (let ((newword (make-string-output-stream)))
+			       (write-char nextch newword)
+			       (%split in next-type (read-char in nil)
+				       newword
+				       (cons (if string
+						 (get-output-stream-string word)
+						 (intern (get-output-stream-string word)))
+					     res))))))))))
+    ;; main routine
+    (let ((ch (read-char in nil)))
+      (if (null ch) nil
+	  (progn ; skip the punctuation first
+	    (loop while (eql (chartype ch) 'punctuation)
+	       do (setf ch (read-char in nil)))
+	    ; (format t "1st ch=~:c~%" ch) ; for debug
+	    (let ((out (make-string-output-stream)))
+	      (write-char ch out)
+	      (%split in (chartype ch) (read-char in nil) out nil))))))))
 
 
 
