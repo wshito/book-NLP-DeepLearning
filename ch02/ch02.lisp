@@ -1,6 +1,5 @@
 (defpackage nlp-dl.ch02
-  (:use :cl)
-  (:export :make-n-gram))
+  (:use :cl))
 
 (in-package :nlp-dl.ch02)
 
@@ -76,9 +75,7 @@
 
 (defmacro chartype (ch)
   "1文字分のunicodeポイントコードを取り，文字種のシンボルを返す"
-  (let ((c (gensym)))
-    `(let* ((,c ,ch)
-	    (unicode (char-code ,c)))
+    `(let ((unicode (char-code ,ch)))
        (cond
 	 ((and (< #x002F unicode) (< unicode #x003A)) 'number)
 	 ((and (< #x0040 unicode) (< unicode #x005B)) 'alphabet) ; 大文字
@@ -92,11 +89,11 @@
 (defun split-chartype (in &key (string nil))
   "Inputストリームを取り文字種で分割したリストを返す．`:string`が`t`なら文字列の，`nil`ならシンボルのリストを返す．"
   (macrolet ((%make-result (stream result)
-	       `(cons (if string (get-output-stream-string ,stream)
+	       `(push (if string (get-output-stream-string ,stream)
 			  (intern (get-output-stream-string ,stream)))
 		      ,result)))
     (labels ((%split (in type nextch word res) ; type for current char
-	       (if (null nextch) (reverse (%make-result word res))
+	       (if (null nextch) (nreverse (%make-result word res))
 		   (let ((next-type (chartype nextch)))
 		     ;; (format t "ch=~:c~%" nextch) ; for debug
 		     (if (eql type next-type)
@@ -112,7 +109,7 @@
 			   (if (null nextch) 
 			       ;; end of the stream while looking for
 			       ;; non-punctuation
-			       (reverse (%make-result word res))
+			       (nreverse (%make-result word res))
 			       ;; new word found
 			       (%split in next-type (read-char in nil)
 				       (write-char> nextch
@@ -129,14 +126,12 @@
 		      (write-char> ch (make-string-output-stream))
 		      nil)))))))
 
-
 (defun make-n-gram (n lst)
   "リストからN-Gramを作成して返す．"
   (if (> 2 n) lst
       (labels ((%nhead (n lst res)
-		 (if (null lst) (reverse res)
-		     (if (= n 1) (reverse (cons (car lst) res))
-			 (%nhead (1- n) (cdr lst) (cons (car lst) res))))))
-	(loop for x on lst
+		 (if (null lst) (nreverse res)
+		     (if (= n 1) (nreverse (push (car lst) res))
+			 (%nhead (1- n) (cdr lst) (push (car lst) res))))))
+	(loop for x on lst  ; on shifts the lst content like maplist
 	     collect (%nhead n x nil)))))
-
