@@ -13,15 +13,13 @@ RUN apk --no-cache --update add \
     bash \
     ca-certificates \
     libstdc++ \
-    su-exec \
  && apk --no-cache --update add --virtual build-dependencies \
     build-base \
     curl \
     file \
     git \
     wget \
-    openssl \
-    sudo
+    openssl
 #  
 # Install MeCab
 #
@@ -31,7 +29,7 @@ RUN MECAB_URL="https://drive.google.com/uc?export=download&id=0B4y35FiV1wh7cENtO
   && cd /tmp/mecab-[0-9]* \
   && ./configure --enable-utf8-only --with-charset=utf8 \
   && CPUCOUNT=$(getconf _NPROCESSORS_ONLN)  \
-  && make  -j ${CPUCOUNT} \
+  && make -j ${CPUCOUNT} \
   && make install \
 #  
 # Install IPA dic
@@ -39,7 +37,7 @@ RUN MECAB_URL="https://drive.google.com/uc?export=download&id=0B4y35FiV1wh7cENtO
   && wget -q -O - ${IPADIC_URL} | tar -xzf - -C /tmp \
   && cd /tmp/mecab-ipadic-* \
   && ./configure --with-charset=utf8 \
-  && make  -j ${CPUCOUNT} \
+  && make -j ${CPUCOUNT} \
   && make install \
 #
 # Install Neologd
