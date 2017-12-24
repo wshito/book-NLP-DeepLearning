@@ -1,0 +1,57 @@
+= Dockerの使い方
+
+== Mecabイメージの使い方
+
+=== パイプを使って使用する方法
+
+```bash
+$ echo "明日は晴れるかな．" | docker run -i --rm mecab-base mecab
+```
+
+毎回，イメージからコンテナを作成して使用する．`--rm` を付けることで実行後コンテナを削除するのでコンテナに名前をつける必要はない．
+
+=== コンテナに入って使用する方法
+
+`mecab-base` イメージから `mecab` という名前のコンテナを作成し（`--name`），`bash` を起動し仮想端末に入る（`-it`）．
+
+```bash
+$ docker run -it --name mecab mecab-base /bin/bash
+bash-4.3# echo "すもももももももものうち" | mecab
+すもも	名詞,一般,*,*,*,*,すもも,スモモ,スモモ
+も	助詞,係助詞,*,*,*,*,も,モ,モ
+もも	名詞,一般,*,*,*,*,もも,モモ,モモ
+も	助詞,係助詞,*,*,*,*,も,モ,モ
+もも	名詞,一般,*,*,*,*,もも,モモ,モモ
+の	助詞,連体化,*,*,*,*,の,ノ,ノ
+うち	名詞,非自立,副詞可能,*,*,*,うち,ウチ,ウチ
+EOS
+bash-4.3# exit
+```
+
+一旦コンテナを生成したら，`exit` してもコンテナを削除するまで残っている．
+
+```bash
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                     PORTS               NAMES
+0e2b9300a107        mecab-base          "/bin/bash"         8 minutes ago       Exited (0) 6 minutes ago                       mecab
+```
+
+コンテナ生成時にコンテナ名を付け忘れた場合は，自動的に付けられたコンテナ名を変更できる．
+
+```bash
+$ docker rename old-name new-name
+```
+
+再びコンテナを起動するには以下を実行する．`-i` はインタアクティブ・モード．
+
+```bash
+$ docker start -i mecab
+bash-4.3#
+```
+
+停止中のコンテナを削除したい場合は `docker rm` を使う．`rmi` はコンテナではなくイメージを削除してしまうので注意．
+
+```bash
+$ docker rm mecab
+```
+
