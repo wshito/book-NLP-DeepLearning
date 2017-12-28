@@ -21,3 +21,7 @@
 ;;; 文字種からN-Gramを作成
 (make-n-gram 2 (split-chartype (make-string-input-stream *sample*)))
 (make-n-gram 3 (split-chartype (make-string-input-stream *sample*)))
+
+;;; 単語から1-of-N表現と対応する単語リストを作成
+(make-1-of-n (mecab "隣の客はよく食う客だ．客はうるさい"))
+(make-1-of-n (mecab "明日は明日の風が吹く．"))

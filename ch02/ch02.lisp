@@ -44,9 +44,10 @@
 	       collect (intern (subseq str i (min (+ i n) len))))))))
 
 
-(defun make-bag (lst)
-  "リスト内の要素の出現回数を返す．"
-  (let ((ht (make-hash-table)))
+(defun make-bag (lst &key (hashtable nil))
+  "リスト内の要素の出現回数を返す．`:hashtable t`ならハッシュテーブルを返す．"
+  (let* ((tf (if (symbolp (car lst)) #'eql #'equal))
+	 (ht (make-hash-table :test tf)))
     (labels ((%make-bag (lst)
 	     (if lst
 		 (let ((ele (car lst)))
@@ -57,10 +58,10 @@
 		   (%make-bag (cdr lst)))
 		 ht)))
       (%make-bag lst))
-    (loop
-       for key being each hash-key of ht
-       for val being each hash-values of ht
-       collect (cons key val))))
+    (if hashtable (return-from make-bag ht)
+	(loop
+	   for key being the hash-keys in ht using (hash-value val)
+	   collect (cons key val)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.1.2 単語の処理
@@ -84,7 +85,7 @@
 	 ((and (< #x309F unicode) (< unicode #x30FF)) 'katakana)
 	 ((and (<= #x4E00 unicode) (<= unicode #x9FA0)) 'kanji)
 	 ((and (< #xFF65 unicode ) (< unicode #xFF9F)) 'hankaku-kana)
-	 (t 'punctuation)))))
+	 (t 'punctuation))))
 
 (defun split-chartype (in &key (string nil))
   "Inputストリームを取り文字種で分割したリストを返す．`:string`が`t`なら文字列の，`nil`ならシンボルのリストを返す．"
@@ -135,3 +136,45 @@
 			 (%nhead (1- n) (cdr lst) (push (car lst) res))))))
 	(loop for x on lst  ; on shifts the lst content like maplist
 	     collect (%nhead n x nil)))))
+
+;;; Load cl-mecab
+(ql:quickload :cl-mecab)
+(ql:quickload :split-sequence)
+
+(defun mecab (str &key (string nil))
+  "Mecabで分割された単語リストを返す．`:string t`なら文字列のリストを返す．"
+  (cl-mecab:with-mecab* ("-Owakati")
+    (if string 
+	(butlast (split-sequence:split-sequence #\Space (cl-mecab:parse str)))
+	(butlast (mapcar #'intern
+			 (split-sequence:split-sequence #\Space
+							(cl-mecab:parse str)))))))
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 2.1.3 1-of-N表現の処理
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun make-1-of-N (lst)
+  (let* ((tf (if (symbolp (car lst)) #'eql #'equal))
+	 (ht (make-hash-table :test tf))
+	 (len 0)     ; length of lst
+	 (num 0)     ; tmp var
+	 (index -1)) ; first occurance position
+    (dolist (ele lst)
+      (setf num (gethash ele ht))
+      (when (null num) (setf (gethash ele ht) (incf index)))
+      (incf len))                    ; len = total words
+    (setf num (hash-table-count ht)) ; num = num of distinctive words
+    (let ((1-of-N (make-array (list len num)
+			      :initial-element 0))
+	  (dic (make-array num)))
+      (loop
+	 for ele in lst
+	 for i below len
+	 do
+	   (setf (aref 1-of-N i (nth-value 0 (gethash ele ht)))
+		 1))
+      (loop for key being the hash-keys in ht using (hash-value val)
+	 do
+	   (setf (aref dic val) key))
+      (values 1-of-N dic))))
