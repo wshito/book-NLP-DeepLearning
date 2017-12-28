@@ -2,13 +2,13 @@
 
 == Ch.2
 
-=== 2.2.1 文字の処理
+=== 2.1.1 文字の処理
 
 - `extract-nonascii`: リスト2.1の `extraction.c`（p.44）に対応．
 - `make-n-gram-from-str`: リスト2.2の `make1gram.c`（p.47），リスト2.3の `make3gram.c`（p.50）に対応．
 - `make-bag`: 実行例2.5（p.54）の出現頻度解析をするための関数．
 
-=== 2.2.2 単語の処理
+=== 2.1.2 単語の処理
 
 - `chartype` 1文字分のUnicodeポイントコード（SBCLとAllegroの内部コード）をとり，文字種のシンボルを返す．
 - `split-chartype` Inputストリームを取り，文字種で分割したリストを返す．`:string`が `t` なら文字列の，`nil` ならシンボルのリストを返す．
