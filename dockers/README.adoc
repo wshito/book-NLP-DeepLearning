@@ -1,6 +1,20 @@
 = Dockerの使い方
 
-== Mecabイメージの使い方
+
+-- `mecab-base` イメージ
+
+Mecabだけをパッケージ化したもの．
+
+-- `mecab` イメージ
+
+`wshito/sbcl-swank` イメージに Mecab をパッケージ化したもの．`wshito/sbcl-swank` イメージはRoswellで管理されたSBCLにSwankサーバーを組み込んだもの．
+
+-- `cl-mecab` イメージ
+
+`mecab` イメージに `cl-mecab` ライブラリを追加したもの．
+
+
+== `mecab-base` イメージの使い方
 
 === パイプを使って使用する方法
 
