@@ -11,7 +11,7 @@
 === 2.1.2 単語の処理
 
 - `chartype` 1文字分のUnicodeポイントコード（SBCLとAllegroの内部コード）をとり，文字種のシンボルを返す．
-- `split-chartype` Inputストリームを取り，文字種で分割したリストを返す．`:string`が `t` なら文字列の，`nil` ならシンボルのリストを返す．
+- `split-chartype` Inputストリームを取り，文字種で分割したリストを返す．`:string` が `t` なら文字列の，`nil` ならシンボルのリストを返す．
 - `make-n-gram` リストからN-Gramを作成して返す．
 
 
